@@ -1,32 +1,31 @@
+// 📁 routes/authRoutes.js
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-
 const router = express.Router();
 
 router.post('/signup', async (req, res) => {
   const { name, email, password } = req.body;
-  if (!name || !email || !password) return res.status(400).json({ msg: 'All fields required' });
+  if (!name || !email || !password) return res.status(400).json({ msg: 'All fields are required' });
 
   try {
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ msg: 'User already exists' });
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ msg: 'User already exists' });
 
-    const hashedPass = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPass });
+    const hashed = await bcrypt.hash(password, 10);
+    const user = new User({ name, email, password: hashed });
     await user.save();
 
-    res.status(201).json({ msg: 'Signup successful' });
+    res.status(201).json({ msg: 'User registered successfully' });
   } catch (err) {
-    console.error('Signup Error:', err.message);
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ msg: 'All fields required' });
+  if (!email || !password) return res.status(400).json({ msg: 'All fields are required' });
 
   try {
     const user = await User.findOne({ email });
@@ -39,8 +38,7 @@ router.post('/login', async (req, res) => {
 
     res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
   } catch (err) {
-    console.error('Login Error:', err.message);
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
 
